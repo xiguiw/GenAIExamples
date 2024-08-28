@@ -27,6 +27,7 @@ services:
   tei-embedding-service:
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
     container_name: tei-embedding-server
+    #cpuset: "90-100"
     ports:
       - "6006:80"
     volumes:
@@ -40,6 +41,7 @@ services:
   embedding:
     image: ${REGISTRY:-opea}/embedding-tei:${TAG:-latest}
     container_name: embedding-tei-server
+    #cpuset: "101-105"
     depends_on:
       - tei-embedding-service
     ports:
@@ -57,6 +59,7 @@ services:
   retriever:
     image: ${REGISTRY:-opea}/retriever-redis:${TAG:-latest}
     container_name: retriever-redis-server
+    #cpuset: "106-108"
     depends_on:
       - redis-vector-db
     ports:
@@ -77,6 +80,7 @@ services:
   tei-reranking-service:
     image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.2
     container_name: tei-reranking-server
+    #cpuset: "120-128"
     ports:
       - "8808:80"
     volumes:
@@ -93,6 +97,7 @@ services:
   reranking:
     image: ${REGISTRY:-opea}/reranking-tei:${TAG:-latest}
     container_name: reranking-tei-xeon-server
+    #cpuset: "120-128"
     depends_on:
       - tei-reranking-service
     ports:
@@ -113,18 +118,26 @@ services:
   vllm_service:
     image: ${REGISTRY:-opea}/vllm:${TAG:-latest}
     container_name: vllm-service
+    privileged: true
     ports:
       - "9009:80"
     volumes:
       - "./data:/data"
     shm_size: 128g
+    stdin_open: true
+    tty: true
     environment:
       no_proxy: ${no_proxy}
       http_proxy: ${http_proxy}
       https_proxy: ${https_proxy}
       HF_TOKEN: ${HUGGINGFACEHUB_API_TOKEN}
       LLM_MODEL_ID: ${LLM_MODEL_ID}
-    command: --model $LLM_MODEL_ID --host 0.0.0.0 --port 80
+      HF_HOME: /data
+      VLLM_CPU_KVCACHE_SPACE: 40
+      VLLM_CPU_OMP_THREADS_BIND: "0-39|40-79"
+      VLLM_CPU_AVX512BF16: 1
+    #entrypoint: /bin/bash
+    command: --model $LLM_MODEL_ID --host 0.0.0.0 --port 80 -tp=2 --distributed-executor-backend mp
   llm:
     image: ${REGISTRY:-opea}/llm-vllm:${TAG:-latest}
     container_name: llm-vllm-server
