@@ -11,7 +11,7 @@ services:
   dataprep-redis-service:
     image: ${REGISTRY:-opea}/dataprep-redis:${TAG:-latest}
     build:
-      context: https://github.com/opea-project/GenAIComps.git
+      context: ../../../../../../GenAIComps
       dockerfile: comps/dataprep/redis/langchain/Dockerfile
       args:
         http_proxy: ${http_proxy}
@@ -47,7 +47,7 @@ services:
   retriever:
     image: ${REGISTRY:-opea}/retriever-redis:${TAG:-latest}
     build:
-      context: https://github.com/opea-project/GenAIComps.git
+      context: ../../../../../../GenAIComps
       dockerfile: comps/retrievers/redis/langchain/Dockerfile
       args:
         http_proxy: ${http_proxy}
@@ -102,6 +102,10 @@ services:
     image: ${REGISTRY:-opea}/chatqna:${TAG:-latest}
     build:
       context: ../../../../
+      dockerfile: Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
     container_name: chatqna-aipc-backend-server
     depends_on:
       - redis-vector-db
@@ -132,6 +136,9 @@ services:
     build:
       context: ../../../../ui
       dockerfile: docker/Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
     container_name: chatqna-aipc-ui-server
     depends_on:
       - chatqna-aipc-backend-server
@@ -146,7 +153,7 @@ services:
   chatqna-aipc-nginx-server:
     image: ${REGISTRY:-opea}/nginx:${TAG:-latest}
     build:
-      context: https://github.com/opea-project/GenAIComps.git
+      context: ../../../../../../GenAIComps
       dockerfile: comps/nginx/Dockerfile
       args:
         http_proxy: ${http_proxy}
